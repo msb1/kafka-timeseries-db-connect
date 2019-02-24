@@ -1,0 +1,62 @@
+version: "3"
+
+networks:
+  tt_net:
+    driver: bridge
+
+services:
+
+ cass0:
+  image: cassandra
+  ports:
+    - 9042:9042
+    - 9160:9160
+    - 7199:7199
+    - 8778:8778
+  networks:
+    - tt_net
+  environment:
+    - CASSANDRA_START_RPC=true
+  environment:
+    - CASSANDRA_SEEDS=cass0
+    - CASSANDRA_CLUSTER_NAME=tt_cluster
+  ulimits:
+    memlock: -1
+    nproc: 32768
+    nofile: 100000
+
+ cass1:
+  image: cassandra
+  ports:
+    - 9142:9042
+  networks:
+    - tt_net
+  command: bash -c 'sleep 60;  /docker-entrypoint.sh cassandra -f'
+  depends_on:
+    - cass0
+  environment:
+    - CASSANDRA_SEEDS=cass0
+    - CASSANDRA_CLUSTER_NAME=tt_cluster
+  ulimits:
+    memlock: -1
+    nproc: 32768
+    nofile: 100000
+ 
+ cass2:
+  image: cassandra
+  container_name: cass
+  ports:
+    - 9242:9042
+  networks:
+    - tt_net
+  command: bash -c 'sleep 120;  /docker-entrypoint.sh cassandra -f'
+  depends_on:
+    - cass0
+  environment:
+    - CASSANDRA_SEEDS=cass0
+    - CASSANDRA_CLUSTER_NAME=tt_cluster
+  ulimits:
+    memlock: -1
+    nproc: 32768
+    nofile: 100000
+

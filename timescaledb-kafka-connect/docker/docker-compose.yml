@@ -1,0 +1,53 @@
+version: '3'
+
+networks:
+  tt_net:
+    driver: bridge
+
+services:
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - tt_net
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=secret
+
+  portainer:
+    image: portainer/portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9000:9000
+    networks:
+      - tt_net
+
+  timescale:
+    image: timescale/timescaledb
+    # command: postgres -c shared_preload_libraries=timescaledb
+    ports:
+      - 5432:5432
+    networks:
+      - tt_net
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - TIMESCALEDB_TELEMETRY=off
+    volumes:
+      - ./timescale:/var/lib/postgresql
+#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      - timescale
+    ports:
+      - "5555:80"
+    networks:
+      - tt_net
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+    restart: unless-stopped
